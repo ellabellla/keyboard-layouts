@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use gen_layouts_sys::*;
 
 const UNICODE_ENTER: u16 = 10; // \n

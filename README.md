@@ -1,6 +1,6 @@
 # Keyboard Layouts FORK
 
-A fork of Chris Ricketts's Keyboard Layouts library. The fork removes all and strips down the library to it's core functions.
+A fork of Chris Ricketts's Keyboard Layouts library. The fork removes all binaries and strips down the library to it's core functions.
 
 Get the keycodes and modifier keys required to type an ASCII string for a number of different keyboard layouts. 
 
@@ -8,75 +8,29 @@ Takes inspiration and the [initial layout mappings](https://github.com/PaulStoff
 
 It works by preprocessing a C header file that describes the key mappings for each layout, including any deadkeys using `#define`'s. It then uses [bindgen](https://docs.rs/bindgen/0.47.2/bindgen/) to convert those into Rust constants and then [syn](https://docs.rs/syn/0.15.26/syn/) to extract the relevant keycodes and masks. It finally uses [quote!](https://docs.rs/quote/0.6.11/quote/) and [lazystatic!](https://docs.rs/lazy_static/1.2.0/lazy_static/) to produce a layout map enabling you to switch keyboard layouts on the fly without recompilation. 
 
-## Example Usage
-
-```rust
-
-let test_string = "This is a test string.\n";
-
-// Get the sequence of HID packets that would be produced by a keyboard with the specified layout
-let hid_packets = keyboard_layouts::string_to_hid_packets("LAYOUT_UNITED_KINGDOM", test_string).unwrap();
-
-// Write those HID packets to your virtual keyboard device. In this case a OTG HID gadget device file (linux).
-std::fs::write("/dev/hidg0", hid_packets);
-```
-
-### Virtual Keyboard Device
-
-This depends on your operating system and underlying hardware. So far this has only been tried on Linux but the HID packets should be valid for Windows and Mac.
-
-On Linux you can either:
-- Create a HID gadget device file on a Linux SBC with an OTG USB port. E.g. Raspberry Pi, Beaglebone. [This guide describes how](https://www.isticktoit.net/?p=1383)
-- Check out the tests to see how to use the [tokio-linux-uhid](https://crates.io/crates/tokio-linux-uhid) crate to create a virtual HID device on a Linux desktop
-
-I'm afraid for Windows and Mac I have no idea.
-
 ## Supported Layouts 
-
-Spanish
-
-Canadian French
-
-German Mac
-
-German Swiss
-
-Icelandic
-
-United Kingdom
-
-Italian
-
-French Swiss
-
-Finnish
-
-Danish
-
-French
-
-German
-
-Turkish
-
-French Belgian
-
-Portuguese
-
-Canadian Multilingual
-
-Spanish Latin America
-
-US English
-
-US International
-
-Swedish
-
-Portuguese Brazilian
-
-Irish
-
+ - Spanish
+ - Canadian French
+ - German Mac
+ - German Swiss
+ - Icelandic
+ - United Kingdom
+ - Italian
+ - French Swiss
+ - Finnish
+ - Danish
+ - French
+ - German
+ - Turkish
+ - French Belgian
+ - Portuguese
+ - Canadian Multilingual
+ - Spanish Latin America
+ - US English
+ - US International
+ - Swedish
+ - Portuguese Brazilian
+ - Irish
 Norwegian
 
 ## Testing 
