@@ -9,21 +9,8 @@ const UNICODE_LAST_ASCII: u16 = 0x7F; // BACKSPACE
 const _UNICODE_DIGIT_OFFSET: usize = 48; // 0
 const KEY_MASK: u16 = 0x3F; // Remove SHIFT/ALT/CTRL from keycode
 
-#[derive(Debug)]
-#[repr(u8)]
-pub enum Release {
-    All = 0,
-    Keys = 1,
-    None = 2,
-}
 
-#[derive(Debug)]
-pub struct KeyMod {
-    pub key: u8,
-    pub modifier: u8,
-    pub release: Release,
-}
-
+/// Keycode
 pub enum Keycode {
     ModifierKeySequence(u16, Vec<u16>),
     RegularKey(u16),
@@ -35,6 +22,7 @@ pub fn available_layouts() -> Vec<&'static str> {
     LAYOUT_MAP.keys().map(|k| *k).collect()
 }
 
+/// Get the keycode for the given unicode character
 pub fn keycode_for_unicode(layout: &Layout, unicode: u16) -> Keycode {
     match unicode {
         u if u == UNICODE_ENTER => Keycode::RegularKey(ENTER_KEYCODE & layout.keycode_mask),
@@ -53,6 +41,7 @@ pub fn keycode_for_unicode(layout: &Layout, unicode: u16) -> Keycode {
 }
 
 // https://github.com/PaulStoffregen/cores/blob/master/teensy3/usb_keyboard.c
+/// Apply Deadkey mask
 pub fn deadkey_for_keycode(layout: &Layout, keycode: u16) -> Option<u16> {
     layout.dead_keys_mask.and_then(|dkm| {
         let keycode = keycode & dkm;
@@ -91,6 +80,7 @@ pub fn deadkey_for_keycode(layout: &Layout, keycode: u16) -> Option<u16> {
 }
 
 // https://github.com/PaulStoffregen/cores/blob/master/usb_hid/usb_api.cpp#L196
+/// Get required modifier key to type keycode
 pub fn modifier_for_keycode(layout: &Layout, keycode: u16) -> u8 {
     let mut modifier = 0u16;
 
@@ -114,6 +104,7 @@ pub fn modifier_for_keycode(layout: &Layout, keycode: u16) -> u8 {
 }
 
 // https://github.com/PaulStoffregen/cores/blob/master/usb_hid/usb_api.cpp#L212
+/// Get key for keycode
 pub fn key_for_keycode(layout: &Layout, keycode: u16) -> u8 {
     let key = keycode & KEY_MASK;
     match layout.non_us {

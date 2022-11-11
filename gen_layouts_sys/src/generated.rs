@@ -13,7 +13,9 @@ pub const NUMPAD_KEYS: [u16; 10usize] = [
     61538u16, 61529u16, 61530u16, 61531u16, 61532u16, 61533u16, 61534u16, 61535u16, 61536u16,
     61537u16,
 ];
+
 lazy_static! {
+    /// Map of Layouts
     pub static ref LAYOUT_MAP: HashMap<&'static str, Layout> = {
         let mut m = HashMap::new();
         m.insert(

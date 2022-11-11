@@ -1,5 +1,5 @@
 use gen_layouts_sys::LAYOUT_MAP;
-use keyboard_layouts::{KeyMod, keycode_for_unicode, Keycode, Release, deadkey_for_keycode, key_for_keycode, modifier_for_keycode};
+use keyboard_layouts::{keycode_for_unicode, Keycode, deadkey_for_keycode, key_for_keycode, modifier_for_keycode};
 use lazy_static::lazy_static;
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
@@ -31,6 +31,22 @@ const HID_PACKET_SUFFIX: [u8; 5] = [0u8; 5];
 const RELEASE_KEYS_HID_PACKET: [u8; 8] = [0u8; 8];
 /// The number of bytes in a keyboard HID packet
 pub const HID_PACKET_LEN: usize = 8;
+
+#[derive(Debug)]
+#[repr(u8)]
+pub enum Release {
+    All = 0,
+    Keys = 1,
+    None = 2,
+}
+
+#[derive(Debug)]
+pub struct KeyMod {
+    pub key: u8,
+    pub modifier: u8,
+    pub release: Release,
+}
+
 
 lazy_static! {
     static ref X_LAYOUT_MAP: HashMap<&'static str, (&'static str, Option<&'static str>)> = hashmap! {

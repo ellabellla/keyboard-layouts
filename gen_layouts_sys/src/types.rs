@@ -1,3 +1,4 @@
+/// Deadkey mask
 pub struct DeadKeys {
     pub acute_accent_bits: Option<u16>,
     pub deadkey_accute_accent: Option<u16>,
@@ -13,6 +14,7 @@ pub struct DeadKeys {
     pub deadkey_tilde: Option<u16>,
 }
 
+/// Keyboard layout
 pub struct Layout {
     pub shift_mask: u16,
     pub alt_mask: Option<u16>,
