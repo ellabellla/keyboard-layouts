@@ -1,4 +1,6 @@
-# Keyboard Layouts
+# Keyboard Layouts FORK
+
+A fork of Chris Ricketts's Keyboard Layouts library. The fork removes all and strips down the library to it's core functions.
 
 Get the keycodes and modifier keys required to type an ASCII string for a number of different keyboard layouts. 
 
@@ -28,30 +30,6 @@ On Linux you can either:
 - Check out the tests to see how to use the [tokio-linux-uhid](https://crates.io/crates/tokio-linux-uhid) crate to create a virtual HID device on a Linux desktop
 
 I'm afraid for Windows and Mac I have no idea.
-
-## kbsim CLI tool
-
-There is a CLI tool, `kbsim`, included that can be useful.
-```
-USAGE:
-    kbsim [FLAGS] [OPTIONS] [STRING]
-
-FLAGS:
-    -h, --help       Prints help information
-    -n, --newline    Hit the 'Enter' key after writing the string
-    -V, --version    Prints version information
-
-OPTIONS:
-    -c, --cooldown <cooldown>    Specify the number of milliseconds to wait between sending each HID packet to the
-                                 device file [default: 0]
-    -d, --delay <delay>          Specify the number of seconds to wait before writing [default: 0]
-    -f, --hid-file <hid_file>    The HID file to write to. Defaults to /dev/hidg0
-    -l, --layout <layout>        The keyboard layout to use. Specify 'list' to show all available layouts [default:
-                                 LAYOUT_US_ENGLISH]
-
-ARGS:
-    <STRING>  
-```
 
 ## Supported Layouts 
 

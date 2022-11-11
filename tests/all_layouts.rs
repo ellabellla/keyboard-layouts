@@ -1,15 +1,19 @@
+use gen_layouts_sys::LAYOUT_MAP;
+use keyboard_layouts::{KeyMod, keycode_for_unicode, Keycode, Release, deadkey_for_keycode, key_for_keycode, modifier_for_keycode};
 use lazy_static::lazy_static;
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
 use tokio_linux_uhid::{Bus, CreateParams, UHIDDevice};
 
 use std::collections::HashMap;
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
 use std::panic;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
+
+use bytes::{BufMut, Bytes, BytesMut};
+use log::debug;
+
 
 // Keyboard Report Descriptor
 const RDESC: [u8; 63] = [
@@ -22,6 +26,11 @@ const RDESC: [u8; 63] = [
 const ALPHA_NUMERIC: &'static str =
     "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const SYMBOLS: &'static str = "\"#!$%&'()*+,-.\\/:;<=>?@[]^_`{|}~\"";
+
+const HID_PACKET_SUFFIX: [u8; 5] = [0u8; 5];
+const RELEASE_KEYS_HID_PACKET: [u8; 8] = [0u8; 8];
+/// The number of bytes in a keyboard HID packet
+pub const HID_PACKET_LEN: usize = 8;
 
 lazy_static! {
     static ref X_LAYOUT_MAP: HashMap<&'static str, (&'static str, Option<&'static str>)> = hashmap! {
@@ -79,6 +88,90 @@ fn set_x_keyboard_layout(layout: &str, variant: Option<&str>) {
         .expect("Failed to setup console");
 }
 
+
+/// Get a list of the key and modifier pairs required to type the given string on a keyboard with
+/// the specified layout.
+pub fn string_to_keys_and_modifiers(layout_key: &str, string: &str) -> Option<Vec<KeyMod>> {
+    let layout = LAYOUT_MAP
+        .get(layout_key)?;
+
+    let mut keys_and_modifiers: Vec<KeyMod> = Vec::with_capacity(string.len());
+
+    for c in string.chars() {
+        match keycode_for_unicode(layout, c as u16) {
+            Keycode::ModifierKeySequence(modifier, sequence) => {
+                for keycode in sequence {
+                    keys_and_modifiers.push(KeyMod {
+                        key: keycode as u8,
+                        modifier: modifier as u8,
+                        release: Release::Keys,
+                    });
+                }
+                // Manually add release after sequence is finished
+                keys_and_modifiers.push(KeyMod {
+                    key: 0,
+                    modifier: 0,
+                    release: Release::None,
+                });
+            }
+            Keycode::RegularKey(keycode) => {
+                if let Some(dead_keycode) = deadkey_for_keycode(layout, keycode) {
+                    let key = key_for_keycode(layout, dead_keycode);
+                    let modifier = modifier_for_keycode(layout, dead_keycode);
+                    keys_and_modifiers.push(KeyMod {
+                        key,
+                        modifier,
+                        release: Release::All,
+                    });
+                }
+                let key = key_for_keycode(layout, keycode);
+                let modifier = modifier_for_keycode(layout, keycode);
+                keys_and_modifiers.push(KeyMod {
+                    key,
+                    modifier,
+                    release: Release::All,
+                });
+            }
+            _ => return None,
+        }
+    }
+
+    Some(keys_and_modifiers)
+}
+
+/// Create the sequence of HID packets required to type the given string. Impersonating a keyboard
+/// with the specified layout. These packets can be written directly to a HID device file.
+pub fn string_to_hid_packets(layout_key: &str, string: &str) -> Option<Bytes> {
+    let keys_and_modifiers = string_to_keys_and_modifiers(layout_key, string)?;
+
+    debug!("Keys and Modifiers for {}:{:?}", string, keys_and_modifiers);
+    let mut packet_bytes = BytesMut::with_capacity(HID_PACKET_LEN * keys_and_modifiers.len() * 2);
+
+    for KeyMod {
+        key,
+        modifier,
+        release,
+    } in keys_and_modifiers.iter()
+    {
+        packet_bytes.put_u8(*modifier);
+        packet_bytes.put_u8(0u8);
+        packet_bytes.put_u8(*key);
+        packet_bytes.put_slice(&HID_PACKET_SUFFIX);
+        match *release {
+            Release::All => packet_bytes.put_slice(&RELEASE_KEYS_HID_PACKET),
+            Release::Keys => {
+                packet_bytes.put_u8(*modifier);
+                packet_bytes.put_u8(0u8);
+                packet_bytes.put_u8(0u8);
+                packet_bytes.put_slice(&HID_PACKET_SUFFIX);
+            }
+            Release::None => {}
+        }
+    }
+
+    Some(packet_bytes.freeze())
+}
+
 fn write_string_for_layout(string: &str, layout: &str) {
     let create_params = CreateParams {
         name: String::from("all_layouts_uhid"),
@@ -98,7 +191,7 @@ fn write_string_for_layout(string: &str, layout: &str) {
     let mut input = String::new();
 
     let packets =
-        keyboard_layouts::string_to_hid_packets(layout, &format!("{}\n", string)).unwrap();
+        string_to_hid_packets(layout, &format!("{}\n", string)).unwrap();
 
     uhid_device.send_input(&[0u8; 8]).unwrap();
 
@@ -155,7 +248,7 @@ fn create_uhid_device() {
 
     let core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
-    let mut uhid_device = UHIDDevice::create(&handle, create_params, None).unwrap();
+    let mut _uhid_device = UHIDDevice::create(&handle, create_params, None).unwrap();
     loop {}
 }
 
