@@ -17,12 +17,3 @@ path = "src/lib.rs"
 [dependencies]
 gen_layouts_sys = { path = "gen_layouts_sys", version = "0.3.0", features = [] }
 
-[dev-dependencies]
-tokio-linux-uhid = "0.3.0"
-futures = "0.1.15"
-tokio-core = "0.1.9"
-bytes = "0.4"
-log = "0.4.17"
-pretty_assertions = "0.5.1"
-maplit = "1.0.1"
-lazy_static = "1.2.0"
